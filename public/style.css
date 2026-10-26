@@ -32,6 +32,7 @@
   --error-bg: rgba(244, 63, 94, 0.14);
   --error-border: rgba(244, 63, 94, 0.35);
   --shadow-card: 0 16px 45px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(255, 255, 255, 0.05);
+  --shadow-modal: 0 24px 50px rgba(0, 0, 0, 0.65);
 }
 
 body {
@@ -115,7 +116,7 @@ body::before {
 }
 
 /* ==========================================================================
-   Top Navbar & Footer
+   Top Navbar
    ========================================================================== */
 
 .site-navbar {
@@ -124,7 +125,7 @@ body::before {
   z-index: 50;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 16px 28px;
   background: rgba(7, 18, 43, 0.7);
   backdrop-filter: blur(14px);
@@ -150,31 +151,9 @@ body::before {
 }
 
 .brand-title {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.3px;
-}
-
-.badge-crypto {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--cyan-hover);
-  background: rgba(14, 165, 233, 0.12);
-  border: 1px solid rgba(14, 165, 233, 0.35);
-  padding: 4px 10px;
-  border-radius: 14px;
-  letter-spacing: 0.5px;
-}
-
-.site-footer {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  padding: 24px 16px;
-  margin-top: auto;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 12px;
-  color: var(--text-muted);
 }
 
 /* ==========================================================================
@@ -451,6 +430,7 @@ body::before {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   border: 1px solid transparent;
   outline: none;
+  text-decoration: none;
 }
 
 .btn-primary {
@@ -704,7 +684,7 @@ input[type="password"]:focus {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-radius: 16px;
-  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.65);
+  box-shadow: var(--shadow-modal);
   border: 1px solid var(--glass-border);
   overflow: hidden;
   transform: scale(0.96) translateY(10px);
@@ -884,7 +864,7 @@ input[type="password"]:focus {
 }
 
 /* ==========================================================================
-   Success Views & Fingerprints
+   Success Views & Highlighted Callouts
    ========================================================================== */
 
 .success-view {
@@ -963,100 +943,45 @@ input[type="password"]:focus {
   outline: none;
 }
 
-/* Fingerprint Box */
-.fingerprint-card {
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
-  text-align: left;
-}
-
-.fingerprint-header {
+/* Prominent Highlighted Security Note on Upload Success */
+.highlight-notice-box {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.fingerprint-title {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  letter-spacing: 0.5px;
-}
-
-.fingerprint-value {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 13px;
-  color: #38bdf8;
-  word-break: break-all;
-}
-
-.toggle-hash-btn {
-  background: none;
-  border: none;
-  color: var(--cyan-hover);
-  font-size: 11px;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: underline;
-}
-
-.expiry-note {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-bottom: 18px;
-}
-
-/* Collapsible Encryption Details */
-.crypto-details {
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  margin-bottom: 20px;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(14, 165, 233, 0.12);
+  border: 1.5px solid rgba(56, 189, 248, 0.45);
+  box-shadow: 0 0 18px rgba(14, 165, 233, 0.18);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 18px 0 22px;
   text-align: left;
-  overflow: hidden;
 }
 
-.crypto-details summary {
-  padding: 10px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #cbd5e1;
-  cursor: pointer;
-  outline: none;
-  user-select: none;
+.notice-icon {
+  color: var(--cyan-hover);
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
-.crypto-details summary:hover {
-  color: #ffffff;
-}
-
-.crypto-details-content {
-  padding: 10px 14px 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 12px;
-  color: var(--text-muted);
+.notice-content {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
 }
 
-.detail-row {
-  display: flex;
-  justify-content: space-between;
+.notice-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--cyan-hover);
+  letter-spacing: 0.6px;
 }
 
-.detail-key {
-  color: #94a3b8;
-}
-
-.detail-val {
+.notice-message {
+  font-size: 13px;
   color: #f1f5f9;
-  font-family: monospace;
+  line-height: 1.45;
+  margin: 0;
 }
 
 /* ==========================================================================
@@ -1139,42 +1064,87 @@ input[type="password"]:focus {
   margin-bottom: 20px;
 }
 
-/* File Info Row */
-.file-info-row {
-  display: flex;
-  flex-wrap: wrap;
+/* Prominently Highlighted Expiry Countdown Box */
+.expiry-highlight-box {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 10px 14px;
-  border-radius: 12px;
-  margin-bottom: 22px;
+  background: rgba(14, 165, 233, 0.14);
+  border: 1.5px solid rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 22px rgba(14, 165, 233, 0.28);
+  padding: 10px 22px;
+  border-radius: 30px;
+  margin: 0 auto 24px;
+  color: #38bdf8;
+  font-weight: 700;
 }
 
-.info-pill {
-  font-size: 12px;
-  font-weight: 600;
-  color: #cbd5e1;
+.expiry-countdown-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 15px;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+  animation: pulseDot 1.6s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Prominently Highlighted Deletion Confirmation on Download Success */
+.highlight-deleted-card {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 14px;
+  background: rgba(16, 185, 129, 0.14);
+  border: 1.5px solid rgba(16, 185, 129, 0.45);
+  box-shadow: 0 0 22px rgba(16, 185, 129, 0.25);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 20px 0 24px;
+  text-align: left;
 }
 
-.info-pill.timer {
-  color: #38bdf8;
-  font-family: monospace;
-  font-size: 13px;
+.deleted-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.22);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  color: #34d399;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.info-pill.badge {
-  background: rgba(14, 165, 233, 0.18);
-  border: 1px solid rgba(14, 165, 233, 0.35);
-  color: var(--cyan-hover);
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 11px;
+.deleted-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.deleted-heading {
+  font-size: 14px;
+  font-weight: 700;
+  color: #6ee7b7;
+}
+
+.deleted-subtext {
+  font-size: 12.5px;
+  color: #e2e8f0;
+  line-height: 1.4;
+  margin: 0;
 }
 
 /* Error Shake Animation */
@@ -1215,21 +1185,6 @@ input[type="password"]:focus {
   color: var(--text-muted);
   line-height: 1.5;
   margin-bottom: 20px;
-}
-
-.footer-link {
-  margin-top: 24px;
-  font-size: 13px;
-}
-
-.footer-link a {
-  color: var(--cyan-hover);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.footer-link a:hover {
-  text-decoration: underline;
 }
 
 /* ==========================================================================
@@ -1275,9 +1230,12 @@ input[type="password"]:focus {
     font-size: 32px;
   }
 
-  .file-info-row {
-    flex-direction: column;
-    gap: 6px;
+  .highlight-notice-box {
+    padding: 12px 14px;
+  }
+
+  .highlight-deleted-card {
+    padding: 12px 14px;
   }
 }
 
@@ -1296,6 +1254,10 @@ input[type="password"]:focus {
   }
 
   .card-shake {
+    animation: none !important;
+  }
+
+  .live-dot {
     animation: none !important;
   }
 }

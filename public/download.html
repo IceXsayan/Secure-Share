@@ -24,7 +24,6 @@
       </div>
       <span class="brand-title">SecureShare</span>
     </a>
-    <span class="badge-crypto">AES-256-GCM</span>
   </header>
 
   <!-- Centered Glass Card Container -->
@@ -46,22 +45,14 @@
       <h1 class="download-title">A file was shared with you</h1>
       <p class="download-subtext">It is encrypted. Enter the password to unlock it.</p>
 
-      <!-- File Metadata Info Row -->
-      <div id="infoRow" class="file-info-row" style="display: none;">
-        <span class="info-pill" id="fileSizePill">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          </svg>
-          <span id="fileSizeText">Loading...</span>
-        </span>
-        <span class="info-pill timer" id="expiryTimer">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-          <span id="expiryTimerText">Expires in --:--</span>
-        </span>
-        <span class="info-pill badge">AES-256-GCM encrypted</span>
+      <!-- Prominently Highlighted Countdown Timer -->
+      <div id="infoRow" class="expiry-highlight-box" style="display: none;">
+        <span class="live-dot"></span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span id="expiryTimerText" class="expiry-countdown-text">Expires in --:--</span>
       </div>
 
       <!-- Main Unlock Form -->
@@ -121,33 +112,21 @@
         <h3 class="success-title">Decryption Successful</h3>
         <p id="decryptedFileInfo" class="success-subtitle"></p>
 
-        <!-- Integrity Result Box -->
-        <div id="integrityBox" class="fingerprint-card" style="border-color: rgba(16, 185, 129, 0.4);">
-          <div class="fingerprint-header">
-            <span class="fingerprint-title" style="color: #34d399;">SHA-256 Integrity Verified</span>
-            <button type="button" id="toggleDlHashBtn" class="toggle-hash-btn">Show full hash</button>
+        <!-- Prominently Highlighted File Deletion Confirmation -->
+        <div class="highlight-deleted-card">
+          <div class="deleted-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
           </div>
-          <div id="dlFingerprintDisplay" class="fingerprint-value" style="color: #6ee7b7;"></div>
+          <div class="deleted-body">
+            <strong class="deleted-heading">File Downloaded</strong>
+            <p class="deleted-subtext">This link is now deleted and permanently inaccessible from the server.</p>
+          </div>
         </div>
 
-        <p class="expiry-note" style="color: #38bdf8; font-weight: 500;">
-          File downloaded. This link is now deleted.
-        </p>
-
-        <!-- Collapsible Encryption Details -->
-        <details class="crypto-details">
-          <summary>View Encryption &amp; Verification Details</summary>
-          <div class="crypto-details-content">
-            <div class="detail-row"><span class="detail-key">Algorithm</span><span class="detail-val">AES-256-GCM</span></div>
-            <div class="detail-row"><span class="detail-key">Key Derivation</span><span class="detail-val">PBKDF2-SHA-256 (100,000 iter)</span></div>
-            <div class="detail-row"><span class="detail-key">Salt Length</span><span class="detail-val">16 bytes (128 bits)</span></div>
-            <div class="detail-row"><span class="detail-key">IV / Nonce</span><span class="detail-val">12 bytes (96 bits)</span></div>
-            <div class="detail-row"><span class="detail-key">Integrity Status</span><span class="detail-val" style="color: #34d399;">Verified Byte-for-Byte</span></div>
-          </div>
-        </details>
-
         <div class="success-actions">
-          <a href="index.html" class="btn btn-secondary btn-block">Send a File</a>
+          <a href="index.html" class="btn btn-primary btn-block">Send a File</a>
         </div>
       </div>
 
@@ -165,17 +144,8 @@
         </p>
         <a href="index.html" class="btn btn-primary">Share a New File</a>
       </div>
-
-      <div class="footer-link">
-        <a href="index.html">Send a file instead</a>
-      </div>
     </div>
   </main>
-
-  <!-- Simple Footer -->
-  <footer class="site-footer">
-    Built for a Cryptography course project. Files are encrypted in your browser.
-  </footer>
 
   <script src="crypto.js"></script>
   <script src="download.js"></script>

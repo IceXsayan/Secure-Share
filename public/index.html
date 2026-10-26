@@ -24,7 +24,6 @@
       </div>
       <span class="brand-title">SecureShare</span>
     </a>
-    <span class="badge-crypto">AES-256-GCM</span>
   </header>
 
   <!-- Main Content Wrapper -->
@@ -46,9 +45,9 @@
         </div>
 
         <div class="feature-chips">
-          <span class="chip">AES-256-GCM</span>
-          <span class="chip">PBKDF2 Key Derivation</span>
-          <span class="chip">End-to-End in Browser</span>
+          <span class="chip">Zero-Knowledge Privacy</span>
+          <span class="chip">Auto-Deletes After Download</span>
+          <span class="chip">No Account Needed</span>
         </div>
       </div>
 
@@ -250,28 +249,19 @@
           <button type="button" id="copyBtn" class="btn btn-secondary">Copy</button>
         </div>
 
-        <!-- SHA-256 Fingerprint Display -->
-        <div class="fingerprint-card">
-          <div class="fingerprint-header">
-            <span class="fingerprint-title">SHA-256 Fingerprint</span>
-            <button type="button" id="toggleHashBtn" class="toggle-hash-btn">Show full hash</button>
+        <!-- Prominently Highlighted Expiry Notice Box -->
+        <div class="highlight-notice-box">
+          <div class="notice-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
           </div>
-          <div id="fingerprintDisplay" class="fingerprint-value"></div>
+          <div class="notice-content">
+            <strong class="notice-badge">Important Security Notice</strong>
+            <p class="notice-message">This link expires in 1 hour or immediately after the first download.</p>
+          </div>
         </div>
-
-        <p class="expiry-note">Link expires in 1 hour or after first download.</p>
-
-        <!-- Collapsible Encryption Details -->
-        <details class="crypto-details">
-          <summary>View Encryption Details</summary>
-          <div class="crypto-details-content">
-            <div class="detail-row"><span class="detail-key">Algorithm</span><span class="detail-val">AES-256-GCM</span></div>
-            <div class="detail-row"><span class="detail-key">Key Derivation</span><span class="detail-val">PBKDF2-SHA-256 (100,000 iter)</span></div>
-            <div class="detail-row"><span class="detail-key">Salt Length</span><span class="detail-val">16 bytes (128 bits)</span></div>
-            <div class="detail-row"><span class="detail-key">IV / Nonce</span><span class="detail-val">12 bytes (96 bits)</span></div>
-            <div class="detail-row"><span class="detail-key">Integrity Hash</span><span class="detail-val">SHA-256 (32 bytes embedded)</span></div>
-          </div>
-        </details>
 
         <div class="success-actions">
           <button type="button" id="shareAnotherBtn" class="btn btn-primary btn-block">Share Another File</button>
@@ -279,11 +269,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Simple Footer -->
-  <footer class="site-footer">
-    Built for a Cryptography course project. Files are encrypted in your browser.
-  </footer>
 
   <script src="crypto.js"></script>
   <script src="upload.js"></script>

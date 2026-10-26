@@ -34,14 +34,10 @@ const line3 = document.getElementById('line3');
 const successView = document.getElementById('successView');
 const shareLinkInput = document.getElementById('shareLink');
 const copyBtn = document.getElementById('copyBtn');
-const fingerprintDisplay = document.getElementById('fingerprintDisplay');
-const toggleHashBtn = document.getElementById('toggleHashBtn');
 const shareAnotherBtn = document.getElementById('shareAnotherBtn');
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB limit
 let selectedFile = null;
-let currentFullHash = '';
-let isShowingFullHash = false;
 
 // Format file size for human-readable display
 function formatSize(bytes) {
@@ -200,23 +196,6 @@ function updateStepper(step) {
   }
 }
 
-// Fingerprint display toggle (short 16 hex vs full 64 hex)
-function updateFingerprintUI() {
-  if (!currentFullHash) return;
-  if (isShowingFullHash) {
-    fingerprintDisplay.textContent = currentFullHash;
-    toggleHashBtn.textContent = 'Show short';
-  } else {
-    fingerprintDisplay.textContent = `${currentFullHash.substring(0, 16)}...`;
-    toggleHashBtn.textContent = 'Show full hash';
-  }
-}
-
-toggleHashBtn.addEventListener('click', () => {
-  isShowingFullHash = !isShowingFullHash;
-  updateFingerprintUI();
-});
-
 // Form submission & encryption pipeline
 uploadForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -259,11 +238,10 @@ uploadForm.addEventListener('submit', async (e) => {
     // Stage 2: Encrypting (packs filename, SHA-256 hash, and file bytes)
     updateStepper(2);
     uploadProgressBar.style.width = '35%';
-    progressStatusText.textContent = 'Computing SHA-256 and encrypting (AES-256-GCM)...';
+    progressStatusText.textContent = 'Encrypting file with AES-256-GCM in browser...';
 
     await new Promise((resolve) => setTimeout(resolve, 50));
-    const { encryptedBlob, saltBase64, ivBase64, fileHashHex } = await encryptFile(selectedFile, password);
-    currentFullHash = fileHashHex;
+    const { encryptedBlob, saltBase64, ivBase64 } = await encryptFile(selectedFile, password);
 
     // Stage 3: Uploading
     updateStepper(3);
@@ -318,10 +296,6 @@ uploadForm.addEventListener('submit', async (e) => {
     const shareUrl = `${window.location.origin}/download.html?id=${uploadResult.id}`;
     shareLinkInput.value = shareUrl;
 
-    // Display fingerprint
-    isShowingFullHash = false;
-    updateFingerprintUI();
-
   } catch (err) {
     showError(err.message || 'An unexpected error occurred during encryption or upload.');
     progressStepper.style.display = 'none';
@@ -354,8 +328,6 @@ copyBtn.addEventListener('click', async () => {
 // Reset modal to initial state
 function resetModal() {
   selectedFile = null;
-  currentFullHash = '';
-  isShowingFullHash = false;
   fileInput.value = '';
   fileInfo.textContent = '';
   fileInfo.className = 'file-info';

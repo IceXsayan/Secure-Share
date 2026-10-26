@@ -1,9 +1,8 @@
-// download.js - Handles fetching, live countdown, animated lock, 4-stage decryption, and integrity verification
+// download.js - Handles fetching, live countdown, animated lock, 4-stage decryption, and file download
 
 const mainCard = document.getElementById('mainCard');
 const lockIconWrap = document.getElementById('lockIconWrap');
 const infoRow = document.getElementById('infoRow');
-const fileSizeText = document.getElementById('fileSizeText');
 const expiryTimerText = document.getElementById('expiryTimerText');
 const downloadForm = document.getElementById('downloadForm');
 const passwordInput = document.getElementById('password');
@@ -25,8 +24,6 @@ const dlStatusText = document.getElementById('dlStatusText');
 // Views
 const downloadSuccessView = document.getElementById('downloadSuccessView');
 const decryptedFileInfo = document.getElementById('decryptedFileInfo');
-const dlFingerprintDisplay = document.getElementById('dlFingerprintDisplay');
-const toggleDlHashBtn = document.getElementById('toggleDlHashBtn');
 const emptyStateView = document.getElementById('emptyStateView');
 
 // URL query parameter
@@ -35,8 +32,6 @@ const fileId = urlParams.get('id');
 
 let cachedPayload = null;
 let timerInterval = null;
-let currentVerifiedHash = '';
-let isShowingFullDlHash = false;
 
 // Format file size helper
 function formatSize(bytes) {
@@ -108,7 +103,7 @@ function triggerDownload(buffer, fileName) {
   }, 10000);
 }
 
-// Live Countdown Timer
+// Live Countdown Timer highlighting the expiry time
 function startCountdown(expiresAt) {
   if (timerInterval) clearInterval(timerInterval);
 
@@ -162,18 +157,11 @@ async function initDownloadPage() {
       return;
     }
 
-    // Display metadata info row
-    if (cachedPayload.fileSize) {
-      fileSizeText.textContent = formatSize(cachedPayload.fileSize);
-    } else {
-      fileSizeText.textContent = 'Encrypted';
-    }
-
+    // Highlight the countdown timer
     if (cachedPayload.expiresAt) {
       startCountdown(cachedPayload.expiresAt);
+      infoRow.style.display = 'inline-flex';
     }
-
-    infoRow.style.display = 'flex';
   } catch (err) {
     showEmptyState('Could not reach server. Please check your internet connection.');
   }
@@ -221,21 +209,15 @@ downloadForm.addEventListener('submit', async (e) => {
     dlStatusText.textContent = 'Deriving AES-256 key with PBKDF2...';
     await new Promise((r) => setTimeout(r, 80));
 
-    // Step 3: Decrypting & Integrity Verification
+    // Step 3: Decrypting
     updateDlStepper(3);
-    dlStatusText.textContent = 'Decrypting ciphertext and verifying SHA-256...';
+    dlStatusText.textContent = 'Decrypting ciphertext and verifying integrity...';
     await new Promise((r) => setTimeout(r, 60));
 
     const encryptedBytes = base64ToBytes(payload.data);
 
     // Call decryptFile (throws "Incorrect password or corrupted file" on mismatch)
-    const {
-      fileName,
-      fileData,
-      originalHashHex,
-      recomputedHashHex,
-      isIntegrityVerified
-    } = await decryptFile(encryptedBytes, password, payload.salt, payload.iv);
+    const { fileName, fileData } = await decryptFile(encryptedBytes, password, payload.salt, payload.iv);
 
     // Step 4: Downloading
     updateDlStepper(4);
@@ -264,9 +246,6 @@ downloadForm.addEventListener('submit', async (e) => {
     downloadSuccessView.style.display = 'block';
 
     decryptedFileInfo.textContent = `File: ${fileName} (${formatSize(fileData.byteLength)})`;
-    currentVerifiedHash = recomputedHashHex;
-    isShowingFullDlHash = false;
-    updateDlFingerprintUI();
 
   } catch (err) {
     triggerShake();
@@ -275,21 +254,4 @@ downloadForm.addEventListener('submit', async (e) => {
     updateDlStepper(0);
     decryptBtn.disabled = false;
   }
-});
-
-// Toggle hash display on download success view
-function updateDlFingerprintUI() {
-  if (!currentVerifiedHash) return;
-  if (isShowingFullDlHash) {
-    dlFingerprintDisplay.textContent = currentVerifiedHash;
-    toggleDlHashBtn.textContent = 'Show short';
-  } else {
-    dlFingerprintDisplay.textContent = `${currentVerifiedHash.substring(0, 16)}...`;
-    toggleDlHashBtn.textContent = 'Show full hash';
-  }
-}
-
-toggleDlHashBtn.addEventListener('click', () => {
-  isShowingFullDlHash = !isShowingFullDlHash;
-  updateDlFingerprintUI();
 });
