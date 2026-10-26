@@ -1,0 +1,5 @@
+Hello, this is a secret test document for SecureShare cryptography project.
+Testing AES-256-GCM encryption with PBKDF2 key derivation!
+Key iterations: 100,000.
+Hash: SHA-256.
+End-to-end browser encryption test.

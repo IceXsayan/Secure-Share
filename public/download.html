@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unlock &amp; Download - SecureShare</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient floating glowing shapes -->
+  <div class="floating-bg" aria-hidden="true">
+    <div class="floating-circle circle-1"></div>
+    <div class="floating-circle circle-2"></div>
+    <div class="floating-circle circle-3"></div>
+  </div>
+
+  <!-- Top Navbar -->
+  <header class="site-navbar">
+    <a href="index.html" class="brand-wrap">
+      <div class="brand-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+      </div>
+      <span class="brand-title">SecureShare</span>
+    </a>
+    <span class="badge-crypto">AES-256-GCM</span>
+  </header>
+
+  <!-- Centered Glass Card Container -->
+  <main class="download-container">
+    <div id="mainCard" class="card download-card">
+      <!-- Animated Lock Icon Header -->
+      <div id="lockIconWrap" class="lock-icon-wrap" aria-hidden="true">
+        <svg class="lock-svg" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Shackle -->
+          <path class="lock-shackle" d="M11 15V9a7 7 0 0 1 14 0v6"></path>
+          <!-- Body -->
+          <rect class="lock-body" x="6" y="15" width="24" height="17" rx="3.5" ry="3.5"></rect>
+          <!-- Keyhole -->
+          <circle cx="18" cy="22.5" r="1.8" fill="currentColor"></circle>
+          <path d="M18 24.3V27"></path>
+        </svg>
+      </div>
+
+      <h1 class="download-title">A file was shared with you</h1>
+      <p class="download-subtext">It is encrypted. Enter the password to unlock it.</p>
+
+      <!-- File Metadata Info Row -->
+      <div id="infoRow" class="file-info-row" style="display: none;">
+        <span class="info-pill" id="fileSizePill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          </svg>
+          <span id="fileSizeText">Loading...</span>
+        </span>
+        <span class="info-pill timer" id="expiryTimer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span id="expiryTimerText">Expires in --:--</span>
+        </span>
+        <span class="info-pill badge">AES-256-GCM encrypted</span>
+      </div>
+
+      <!-- Main Unlock Form -->
+      <form id="downloadForm" novalidate>
+        <div class="form-group">
+          <label for="password">Decryption Password</label>
+          <div class="password-input-wrap">
+            <input type="password" id="password" required autocomplete="current-password" placeholder="Enter secret password">
+          </div>
+        </div>
+
+        <div class="generator-row" style="justify-content: flex-end; margin-top: -8px;">
+          <button type="button" id="togglePasswordBtn" class="btn-link">Show Password</button>
+        </div>
+
+        <!-- 4-Stage Progress Stepper -->
+        <div id="downloadStepper" class="progress-stepper" style="display: none;">
+          <div class="stepper-track download-track">
+            <div class="step-item" id="dlStep1">
+              <div class="step-indicator">1</div>
+              <span class="step-text">Fetching</span>
+            </div>
+            <div class="step-line" id="dlLine1"></div>
+            <div class="step-item" id="dlStep2">
+              <div class="step-indicator">2</div>
+              <span class="step-text">Key</span>
+            </div>
+            <div class="step-line" id="dlLine2"></div>
+            <div class="step-item" id="dlStep3">
+              <div class="step-indicator">3</div>
+              <span class="step-text">Decrypt</span>
+            </div>
+            <div class="step-line" id="dlLine3"></div>
+            <div class="step-item" id="dlStep4">
+              <div class="step-indicator">4</div>
+              <span class="step-text">Download</span>
+            </div>
+          </div>
+          <p id="dlStatusText" class="progress-status-text">Fetching encrypted file...</p>
+        </div>
+
+        <div id="statusMessage" class="status-msg" style="display: none;"></div>
+
+        <button type="submit" id="decryptBtn" class="btn btn-primary btn-block btn-large">
+          Unlock &amp; Download
+        </button>
+      </form>
+
+      <!-- Success View (After Successful Decryption) -->
+      <div id="downloadSuccessView" class="success-view" style="display: none;">
+        <div class="checkmark-wrapper">
+          <svg class="checkmark-svg" viewBox="0 0 52 52">
+            <circle class="checkmark-circle" cx="26" cy="26" r="24" fill="none"/>
+            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+          </svg>
+        </div>
+        <h3 class="success-title">Decryption Successful</h3>
+        <p id="decryptedFileInfo" class="success-subtitle"></p>
+
+        <!-- Integrity Result Box -->
+        <div id="integrityBox" class="fingerprint-card" style="border-color: rgba(16, 185, 129, 0.4);">
+          <div class="fingerprint-header">
+            <span class="fingerprint-title" style="color: #34d399;">SHA-256 Integrity Verified</span>
+            <button type="button" id="toggleDlHashBtn" class="toggle-hash-btn">Show full hash</button>
+          </div>
+          <div id="dlFingerprintDisplay" class="fingerprint-value" style="color: #6ee7b7;"></div>
+        </div>
+
+        <p class="expiry-note" style="color: #38bdf8; font-weight: 500;">
+          File downloaded. This link is now deleted.
+        </p>
+
+        <!-- Collapsible Encryption Details -->
+        <details class="crypto-details">
+          <summary>View Encryption &amp; Verification Details</summary>
+          <div class="crypto-details-content">
+            <div class="detail-row"><span class="detail-key">Algorithm</span><span class="detail-val">AES-256-GCM</span></div>
+            <div class="detail-row"><span class="detail-key">Key Derivation</span><span class="detail-val">PBKDF2-SHA-256 (100,000 iter)</span></div>
+            <div class="detail-row"><span class="detail-key">Salt Length</span><span class="detail-val">16 bytes (128 bits)</span></div>
+            <div class="detail-row"><span class="detail-key">IV / Nonce</span><span class="detail-val">12 bytes (96 bits)</span></div>
+            <div class="detail-row"><span class="detail-key">Integrity Status</span><span class="detail-val" style="color: #34d399;">Verified Byte-for-Byte</span></div>
+          </div>
+        </details>
+
+        <div class="success-actions">
+          <a href="index.html" class="btn btn-secondary btn-block">Send a File</a>
+        </div>
+      </div>
+
+      <!-- Empty / Expired / Already Used State View -->
+      <div id="emptyStateView" class="empty-state" style="display: none;">
+        <div class="empty-state-icon">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+          </svg>
+        </div>
+        <h3 class="empty-state-title">Link Unavailable</h3>
+        <p class="empty-state-desc">
+          This link has already been used or has expired. For maximum privacy, files are automatically deleted immediately after download or within 1 hour.
+        </p>
+        <a href="index.html" class="btn btn-primary">Share a New File</a>
+      </div>
+
+      <div class="footer-link">
+        <a href="index.html">Send a file instead</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Simple Footer -->
+  <footer class="site-footer">
+    Built for a Cryptography course project. Files are encrypted in your browser.
+  </footer>
+
+  <script src="crypto.js"></script>
+  <script src="download.js"></script>
+</body>
+</html>
