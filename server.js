@@ -7,7 +7,7 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const HOST = '0.0.0.0';
+const HOST = process.env.HOST || null;
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 const ONE_HOUR_MS = 60 * 60 * 1000; // 1 hour expiration
 
@@ -299,10 +299,14 @@ app.use((err, req, res, next) => {
   next();
 });
 
-// Start server listening on 0.0.0.0
-const server = app.listen(PORT, HOST, () => {
-  console.log(`[SERVER START] SecureShare server running at http://${HOST}:${PORT}`);
-});
+// Start server listening (dual-stack IPv4/IPv6 by default, or specific HOST if configured)
+const server = HOST
+  ? app.listen(PORT, HOST, () => {
+      console.log(`[SERVER START] SecureShare server running at http://${HOST}:${PORT}`);
+    })
+  : app.listen(PORT, () => {
+      console.log(`[SERVER START] SecureShare server running at http://localhost:${PORT} and http://127.0.0.1:${PORT}`);
+    });
 
 // Configure timeouts for large 500 MB file uploads and downloads
 server.keepAliveTimeout = 650000;
