@@ -152,7 +152,7 @@ async function initDownloadPage() {
     }
 
     cachedPayload = await res.json();
-    if (!cachedPayload.salt || !cachedPayload.iv || !cachedPayload.data) {
+    if (!cachedPayload.salt || !cachedPayload.iv) {
       showEmptyState('This link has already been used or has expired.');
       return;
     }
@@ -214,7 +214,17 @@ downloadForm.addEventListener('submit', async (e) => {
     dlStatusText.textContent = 'Decrypting ciphertext and verifying integrity...';
     await new Promise((r) => setTimeout(r, 60));
 
-    const encryptedBytes = base64ToBytes(payload.data);
+    let encryptedBytes;
+    if (payload.downloadUrl || !payload.data) {
+      const downloadRes = await fetch(payload.downloadUrl || `/api/file/${fileId}/download`);
+      if (!downloadRes.ok) {
+        throw new Error('Failed to retrieve encrypted file from server');
+      }
+      const arrayBuffer = await downloadRes.arrayBuffer();
+      encryptedBytes = new Uint8Array(arrayBuffer);
+    } else {
+      encryptedBytes = base64ToBytes(payload.data);
+    }
 
     // Call decryptFile (throws "Incorrect password or corrupted file" on mismatch)
     const { fileName, fileData } = await decryptFile(encryptedBytes, password, payload.salt, payload.iv);

@@ -36,7 +36,7 @@ const shareLinkInput = document.getElementById('shareLink');
 const copyBtn = document.getElementById('copyBtn');
 const shareAnotherBtn = document.getElementById('shareAnotherBtn');
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB limit
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500 MB limit
 let selectedFile = null;
 
 // Format file size for human-readable display
@@ -130,7 +130,7 @@ function handleFileSelected(file) {
   selectedFile = file;
 
   if (file.size > MAX_FILE_SIZE) {
-    fileInfo.textContent = `${file.name} (${formatSize(file.size)}) - Exceeds 10 MB maximum limit.`;
+    fileInfo.textContent = `${file.name} (${formatSize(file.size)}) - Exceeds 500 MB maximum limit.`;
     fileInfo.className = 'file-info error';
   } else {
     fileInfo.textContent = `${file.name} (${formatSize(file.size)})`;
@@ -210,7 +210,7 @@ uploadForm.addEventListener('submit', async (e) => {
   }
 
   if (selectedFile.size > MAX_FILE_SIZE) {
-    showError('File size exceeds the 10 MB limit. Please select a smaller file.');
+    showError('File size exceeds the 500 MB limit. Please select a smaller file.');
     return;
   }
 
