@@ -17,8 +17,8 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 }
 
 // Multer disk storage streams incoming large files directly to disk chunks,
-// preventing Node.js heap exhaustion / Out-Of-Memory crashes on 500 MB uploads.
-const MAX_FILE_SIZE_BYTES = 500 * 1024 * 1024; // 500 MB limit
+// preventing Node.js heap exhaustion / Out-Of-Memory crashes on 100 MB uploads.
+const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB limit
 const OVERHEAD_BYTES = 64 * 1024; // 64 KB overhead for envelope, filename header & auth tag
 
 const storage = multer.diskStorage({
@@ -289,8 +289,8 @@ app.use((err, req, res, next) => {
     fs.unlink(req.file.path, () => {});
   }
   if (err && err.code === 'LIMIT_FILE_SIZE') {
-    console.warn('[UPLOAD ERROR] File size exceeds 500 MB limit');
-    return res.status(400).json({ error: 'File size exceeds maximum limit of 500 MB' });
+    console.warn('[UPLOAD ERROR] File size exceeds 100 MB limit');
+    return res.status(400).json({ error: 'File size exceeds maximum limit of 100 MB' });
   }
   if (err) {
     console.error('[SERVER ERROR]:', err);
@@ -308,7 +308,7 @@ const server = HOST
       console.log(`[SERVER START] SecureShare server running at http://localhost:${PORT} and http://127.0.0.1:${PORT}`);
     });
 
-// Configure timeouts for large 500 MB file uploads and downloads
+// Configure timeouts for large 100 MB file uploads and downloads
 server.keepAliveTimeout = 650000;
 server.headersTimeout = 660000;
 server.requestTimeout = 30 * 60 * 1000; // 30 minutes
