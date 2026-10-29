@@ -7,7 +7,7 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const HOST = '0.0.0.0';
+const HOST = process.env.HOST || null;
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 const ONE_HOUR_MS = 60 * 60 * 1000; // 1 hour expiration
 
@@ -16,11 +16,25 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
-// Multer memory storage (keeps file in memory buffer before writing to disk)
-// Limit allows 10 MB plaintext plus small cryptographic header/tag overhead (64 KB)
+// Multer disk storage streams incoming large files directly to disk chunks,
+// preventing Node.js heap exhaustion / Out-Of-Memory crashes on 100 MB uploads.
+const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB limit
+const OVERHEAD_BYTES = 64 * 1024; // 64 KB overhead for envelope, filename header & auth tag
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOADS_DIR);
+  },
+  filename: (req, file, cb) => {
+    // Generate temporary filename until metadata is validated
+    const tempName = `temp_${Date.now()}_${crypto.randomBytes(8).toString('hex')}.tmp`;
+    cb(null, tempName);
+  }
+});
+
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: (10 * 1024 * 1024) + (64 * 1024) }
+  storage: storage,
+  limits: { fileSize: MAX_FILE_SIZE_BYTES + OVERHEAD_BYTES }
 });
 
 // Middleware
@@ -46,7 +60,7 @@ async function deleteUploadFiles(id) {
   } catch (e) { /* ignore */ }
 }
 
-// Periodic cleanup every 5 minutes: delete expired files only
+// Periodic cleanup every 5 minutes: delete expired files and orphan temp files
 setInterval(async () => {
   try {
     const files = await fsp.readdir(UPLOADS_DIR);
@@ -54,9 +68,22 @@ setInterval(async () => {
     let expiredCount = 0;
 
     for (const file of files) {
+      const filePath = path.join(UPLOADS_DIR, file);
+
+      // Clean up orphaned temp files older than 10 minutes
+      if (file.startsWith('temp_') || file.endsWith('.tmp')) {
+        try {
+          const stat = await fsp.stat(filePath);
+          if (now - stat.mtimeMs > 10 * 60 * 1000) {
+            await fsp.unlink(filePath);
+          }
+        } catch (e) { /* ignore */ }
+        continue;
+      }
+
       if (file.endsWith('.json')) {
         const id = file.replace('.json', '');
-        const jsonPath = path.join(UPLOADS_DIR, file);
+        const jsonPath = filePath;
 
         try {
           const content = await fsp.readFile(jsonPath, 'utf8');
@@ -92,6 +119,9 @@ setInterval(async () => {
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   try {
     if (!req.file || !req.body.salt || !req.body.iv) {
+      if (req.file && req.file.path) {
+        await fsp.unlink(req.file.path).catch(() => {});
+      }
       console.warn('[UPLOAD REJECTED] Missing encrypted file, salt, or IV');
       return res.status(400).json({ error: 'Missing encrypted file, salt, or IV' });
     }
@@ -112,13 +142,13 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     const jsonPath = path.join(UPLOADS_DIR, `${id}.json`);
 
     // Race-condition prevention:
-    // Write binary data first and await completion
-    await fsp.writeFile(binPath, req.file.buffer);
+    // Move binary data first and await completion
+    await fsp.rename(req.file.path, binPath);
 
     // Write JSON metadata LAST and await completion
     await fsp.writeFile(jsonPath, JSON.stringify(metadata, null, 2), 'utf8');
 
-    console.log(`[UPLOAD SUCCESS] ID: ${id} (${req.file.buffer.length} bytes encrypted)`);
+    console.log(`[UPLOAD SUCCESS] ID: ${id} (${req.file.size} bytes encrypted)`);
 
     // Return the file ID and share link
     res.json({
@@ -126,13 +156,16 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
       link: `/download.html?id=${id}`
     });
   } catch (err) {
+    if (req.file && req.file.path) {
+      await fsp.unlink(req.file.path).catch(() => {});
+    }
     console.error('[UPLOAD ERROR]:', err);
     res.status(500).json({ error: 'Failed to process file upload' });
   }
 });
 
 // GET /api/file/:id
-// Returns JSON with { salt, iv, data, expiresAt, fileSize }
+// Returns metadata JSON: { salt, iv, expiresAt, fileSize, downloadUrl, data (optional for small files) }
 // Server does NOT delete the file on GET
 app.get('/api/file/:id', async (req, res) => {
   const { id } = req.params;
@@ -162,23 +195,75 @@ app.get('/api/file/:id', async (req, res) => {
       return res.status(404).json({ error: 'This link has already been used or has expired' });
     }
 
-    // Read ciphertext binary buffer and encode as Base64
-    const fileBuffer = await fsp.readFile(binPath);
-    const dataBase64 = fileBuffer.toString('base64');
+    const stat = await fsp.stat(binPath);
 
-    console.log(`[GET SUCCESS] ID: ${id} (${fileBuffer.length} bytes delivered)`);
-
-    // Return JSON payload with metadata including expiresAt and fileSize for recipient UI
-    res.json({
+    const responsePayload = {
       salt: meta.salt,
       iv: meta.iv,
-      data: dataBase64,
       expiresAt: meta.expiresAt,
-      fileSize: fileBuffer.length
-    });
+      fileSize: stat.size,
+      downloadUrl: `/api/file/${id}/download`
+    };
+
+    // For backwards compatibility with smaller files (<= 10 MB), include inline Base64 data.
+    // Omitted for large files to avoid V8 string limit crashes (512 MB string length cap).
+    if (stat.size <= 10 * 1024 * 1024) {
+      try {
+        const fileBuffer = await fsp.readFile(binPath);
+        responsePayload.data = fileBuffer.toString('base64');
+      } catch (bufErr) {
+        // Fallback without inline data
+      }
+    }
+
+    console.log(`[GET SUCCESS] ID: ${id} metadata delivered (file size: ${stat.size} bytes)`);
+    res.json(responsePayload);
   } catch (err) {
     console.error(`[GET ERROR] ID: ${id}`, err);
     res.status(500).json({ error: 'Failed to retrieve file' });
+  }
+});
+
+// GET /api/file/:id/download
+// Streams ciphertext binary directly without Base64 memory overhead
+app.get('/api/file/:id/download', async (req, res) => {
+  const { id } = req.params;
+
+  if (!isValidId(id)) {
+    console.warn(`[DOWNLOAD REJECTED] Invalid ID: ${id}`);
+    return res.status(404).json({ error: 'This link has already been used or has expired' });
+  }
+
+  const binPath = path.join(UPLOADS_DIR, `${id}.bin`);
+  const jsonPath = path.join(UPLOADS_DIR, `${id}.json`);
+
+  if (!fs.existsSync(jsonPath) || !fs.existsSync(binPath)) {
+    console.warn(`[DOWNLOAD 404] File not found or already deleted: ${id}`);
+    return res.status(404).json({ error: 'This link has already been used or has expired' });
+  }
+
+  try {
+    const metaContent = await fsp.readFile(jsonPath, 'utf8');
+    const meta = JSON.parse(metaContent);
+
+    if (Date.now() > meta.expiresAt) {
+      console.warn(`[DOWNLOAD EXPIRED] File expired: ${id}`);
+      await deleteUploadFiles(id);
+      return res.status(404).json({ error: 'This link has already been used or has expired' });
+    }
+
+    const stat = await fsp.stat(binPath);
+    console.log(`[DOWNLOAD STREAM] ID: ${id} (${stat.size} bytes streaming)`);
+
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Length', stat.size);
+    res.setHeader('Content-Disposition', `attachment; filename="${id}.bin"`);
+
+    const fileStream = fs.createReadStream(binPath);
+    fileStream.pipe(res);
+  } catch (err) {
+    console.error(`[DOWNLOAD ERROR] ID: ${id}`, err);
+    res.status(500).json({ error: 'Failed to stream file' });
   }
 });
 
@@ -199,9 +284,13 @@ app.delete('/api/file/:id', async (req, res) => {
 
 // Handle multer file size limit error
 app.use((err, req, res, next) => {
+  // Clean up any temporary file created before limit was exceeded
+  if (req.file && req.file.path) {
+    fs.unlink(req.file.path, () => {});
+  }
   if (err && err.code === 'LIMIT_FILE_SIZE') {
-    console.warn('[UPLOAD ERROR] File size exceeds 10 MB limit');
-    return res.status(400).json({ error: 'File size exceeds maximum limit of 10 MB' });
+    console.warn('[UPLOAD ERROR] File size exceeds 100 MB limit');
+    return res.status(400).json({ error: 'File size exceeds maximum limit of 100 MB' });
   }
   if (err) {
     console.error('[SERVER ERROR]:', err);
@@ -210,7 +299,17 @@ app.use((err, req, res, next) => {
   next();
 });
 
-// Start server listening on 0.0.0.0
-app.listen(PORT, HOST, () => {
-  console.log(`[SERVER START] SecureShare server running at http://${HOST}:${PORT}`);
-});
+// Start server listening (dual-stack IPv4/IPv6 by default, or specific HOST if configured)
+const server = HOST
+  ? app.listen(PORT, HOST, () => {
+      console.log(`[SERVER START] SecureShare server running at http://${HOST}:${PORT}`);
+    })
+  : app.listen(PORT, () => {
+      console.log(`[SERVER START] SecureShare server running at http://localhost:${PORT} and http://127.0.0.1:${PORT}`);
+    });
+
+// Configure timeouts for large 100 MB file uploads and downloads
+server.keepAliveTimeout = 650000;
+server.headersTimeout = 660000;
+server.requestTimeout = 30 * 60 * 1000; // 30 minutes
+

@@ -7,7 +7,7 @@
 ## How It Works
 
 1. **Client-Side Encryption:**
-   - The sender selects any file (up to 10 MB) and enters or generates a secure password.
+   - The sender selects any file (up to 100 MB) and enters or generates a secure password.
    - The browser computes the original file's **SHA-256 integrity hash**.
    - A cryptographically secure 16-byte random salt and 12-byte initialization vector (IV) are generated via `window.crypto.getRandomValues`.
    - A 256-bit AES key is derived from the password and salt using **PBKDF2** (SHA-256 with 100,000 iterations).
